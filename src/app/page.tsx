@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -15,7 +16,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import { Toaster, toaster } from "@/components/ui/toaster";
-import { MdDelete, MdCheck } from "react-icons/md";
+import { MdDelete, MdCheck, MdLogin } from "react-icons/md";
 
 import { Task, TaskUser } from "@/types/Task";
 import styles from "./page.module.css";
@@ -31,6 +32,7 @@ interface TaskResult {
 export default function Home() {
   const [tasks, setTasks] = useState<TaskResult[]>([]);
   const [deleteDialogState, setDeleteDialogState] = useState(false);
+  // const googleAccessToken = localStorage.getItem("googleAccessToken");
 
   const getTasks = async () => {
     const response = await axios.post("/task/getTasks");
@@ -41,8 +43,29 @@ export default function Home() {
     getTasks();
   }, []);
 
+  const handleGoogleLogin = () => {
+    const client = (window as any).google.accounts.oauth2.initCodeClient({
+      client_id:
+        "982082306117-5levp1sfnsemva9op8ukinohqg9lbr5s.apps.googleusercontent.com",
+      scope: "openid email profile https://www.googleapis.com/auth/calendar",
+      ux_mode: "popup",
+      redirect_uri: "postmessage",
+      callback: async ({ code }: { code: string }) => {
+        const response = await axios.post("/user/google/callback", {
+          code,
+        });
+        console.log("Running");
+        console.log(response);
+
+        localStorage.setItem("user", JSON.stringify(response.data));
+      },
+    });
+
+    client.requestCode();
+  };
+
   const handleAddTask = async (taskData: Task) => {
-    const response = await axios.post("/task/addTask", taskData);
+    const response = await axios.post("/task/addTask", { task: taskData });
 
     if (response.data.status === 1) {
       setTasks([response.data.taskData, ...tasks]);
@@ -101,7 +124,20 @@ export default function Home() {
           <Heading size="4xl" className={styles.title}>
             Skydo Task management
           </Heading>
+          {/* {googleAccessToken && googleAccessToken.length > 0 ? (
+            <AddTaskForm handleAddTask={handleAddTask} />
+          ) : (
+            <Button
+              colorPalette="green"
+              variant="surface"
+              className={styles.button}
+              onClick={handleGoogleLogin}
+            >
+              <MdLogin /> Login
+            </Button>
+          )} */}
           <AddTaskForm handleAddTask={handleAddTask} />
+          <button onClick={handleGoogleLogin}>login</button>
         </div>
         <div className={styles.cardsContainer}>
           {tasks.map((task) => (
