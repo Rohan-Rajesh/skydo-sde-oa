@@ -1,5 +1,5 @@
 export interface Task {
-  id: number;
+  id?: number;
   title: string;
   description: string;
   user: number;
@@ -7,6 +7,13 @@ export interface Task {
   dueDate: Date;
   priority: number;
   status: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface TaskUser {
+  id: number;
+  name: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

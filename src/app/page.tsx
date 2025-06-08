@@ -8,43 +8,108 @@ import {
   Card,
   Button,
   DataList,
-  Highlight,
   Link,
   CloseButton,
   Dialog,
   Portal,
   Drawer,
+  Badge,
 } from "@chakra-ui/react";
+import { Toaster, toaster } from "@/components/ui/toaster";
 import { MdDelete, MdEdit, MdCheck } from "react-icons/md";
 
-import { Task } from "@/types/Task";
+import { Task, TaskUser } from "@/types/Task";
 import styles from "./page.module.css";
+import AddTaskForm from "@/components/AddTaskForm";
+import { priorities, status } from "@/utils/constants";
+
+interface TaskResult {
+  task: Task;
+  user: TaskUser;
+}
 
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<TaskResult[]>([]);
+  const [deleteDialogState, setDeleteDialogState] = useState(false);
+
+  const getTasks = async () => {
+    const response = await axios.post("/task/getTasks");
+    setTasks(response.data);
+  };
 
   useEffect(() => {
-    const getTasks = async () => {
-      const response = await axios.post("/task/getTasks");
-      setTasks(response.data);
-    };
-
     getTasks();
   }, []);
+
+  const handleAddTask = async (taskData: Task) => {
+    const response = await axios.post("/task/addTask", taskData);
+
+    if (response.data.status === 1) {
+      setTasks([response.data.taskData, ...tasks]);
+
+      toaster.create({
+        title: "Successfully added task!",
+        type: "success",
+      });
+    } else {
+      toaster.create({
+        title: "Error occurred when creating task, please try again",
+        type: "error",
+      });
+    }
+  };
+
+  const handleCompleteTask = async (task: Task) => {
+    const response = await axios.post("/task/completeTask", {
+      taskId: task.id,
+    });
+
+    if (response.data.status === 1) {
+      getTasks();
+
+      toaster.create({
+        title: "Successfully completed task!",
+        type: "success",
+      });
+    } else {
+      toaster.create({
+        title: "Error occurred when completing task, please try again",
+        type: "error",
+      });
+    }
+  };
+
+  const handleDeleteTask = async (task: Task) => {
+    const response = await axios.post("/task/deleteTask", {
+      taskId: task.id,
+    });
+
+    if (response.data.status === 1) {
+      getTasks();
+    } else {
+      toaster.create({
+        title: "Error occurred when deleting task, please try again",
+        type: "error",
+      });
+    }
+  };
 
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <Heading size="4xl" className={styles.title}>
-          Skydo Task management
-        </Heading>
+        <div className={styles.titleContainer}>
+          <Heading size="4xl" className={styles.title}>
+            Skydo Task management
+          </Heading>
+          <AddTaskForm handleAddTask={handleAddTask} />
+        </div>
         <div className={styles.cardsContainer}>
           {tasks.map((task) => (
-            <div key={task.id}>
+            <div key={task.task.id}>
               <Card.Root className={styles.card}>
                 <Card.Body gap="2">
-                  <Card.Title mt="2">{task.title}</Card.Title>
-                  <Card.Description>{task.description}</Card.Description>
+                  <Card.Title mt="2">{task.task.title}</Card.Title>
+                  <Card.Description>{task.task.description}</Card.Description>
                   <DataList.Root
                     orientation="horizontal"
                     className={styles.cardDetails}
@@ -52,37 +117,44 @@ export default function Home() {
                     <DataList.Item>
                       <DataList.ItemLabel>Assigned to</DataList.ItemLabel>
                       <DataList.ItemValue>
-                        <Link href="">@ {task.user}</Link>
+                        <Link href="">@ {task.user.name}</Link>
                       </DataList.ItemValue>
                     </DataList.Item>
                     <DataList.Item>
                       <DataList.ItemLabel>Priority</DataList.ItemLabel>
                       <DataList.ItemValue>
-                        <Highlight
-                          query="High"
-                          styles={{
-                            px: "0.5",
-                            bg: "red.subtle",
-                            color: "orange.fg",
-                          }}
+                        <Badge
+                          className={styles.badge}
+                          colorPalette={
+                            priorities[task.task.status].colorPalette
+                          }
                         >
-                          High
-                        </Highlight>
+                          {priorities[task.task.status].displayName}
+                        </Badge>
                       </DataList.ItemValue>
                     </DataList.Item>
                     <DataList.Item>
                       <DataList.ItemLabel>Status</DataList.ItemLabel>
-                      <DataList.ItemValue>{task.status}</DataList.ItemValue>
+                      <DataList.ItemValue>
+                        <Badge
+                          className={styles.badge}
+                          colorPalette={status[task.task.status].colorPalette}
+                        >
+                          {status[task.task.status].displayName}
+                        </Badge>
+                      </DataList.ItemValue>
                     </DataList.Item>
                     <DataList.Item>
                       <DataList.ItemLabel>Start Date</DataList.ItemLabel>
                       <DataList.ItemValue>
-                        {dayjs(task.startDate).format("d MMM")}
+                        {dayjs(task.task.startDate).format("DD MMM YYYY")}
                       </DataList.ItemValue>
                     </DataList.Item>
                     <DataList.Item>
                       <DataList.ItemLabel>Due Date</DataList.ItemLabel>
-                      <DataList.ItemValue>15th June 2025</DataList.ItemValue>
+                      <DataList.ItemValue>
+                        {dayjs(task.task.dueDate).format("DD MMM YYYY")}
+                      </DataList.ItemValue>
                     </DataList.Item>
                   </DataList.Root>
                 </Card.Body>
@@ -93,6 +165,9 @@ export default function Home() {
                       colorPalette="green"
                       variant="surface"
                       className={styles.button}
+                      onClick={() => {
+                        handleCompleteTask(task.task);
+                      }}
                     >
                       <MdCheck /> Complete
                     </Button>
@@ -136,7 +211,10 @@ export default function Home() {
                         </Drawer.Positioner>
                       </Portal>
                     </Drawer.Root>
-                    <Dialog.Root>
+                    <Dialog.Root
+                      open={deleteDialogState}
+                      onOpenChange={(e) => setDeleteDialogState(e.open)}
+                    >
                       <Dialog.Trigger asChild>
                         <Button
                           colorPalette="red"
@@ -151,13 +229,12 @@ export default function Home() {
                         <Dialog.Positioner>
                           <Dialog.Content className={styles.deleteDialog}>
                             <Dialog.Header>
-                              <Dialog.Title>Dialog Title</Dialog.Title>
+                              <Dialog.Title>Confirm Task Deletion</Dialog.Title>
                             </Dialog.Header>
                             <Dialog.Body style={{ marginBottom: "20px" }}>
                               <p>
-                                Lorem ipsum dolor sit amet, consectetur
-                                adipiscing elit. Sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua.
+                                Are you sure you want to delete this task?
+                                Please click delete below to continue...
                               </p>
                             </Dialog.Body>
                             <Dialog.Footer>
@@ -169,7 +246,16 @@ export default function Home() {
                                   Cancel
                                 </Button>
                               </Dialog.ActionTrigger>
-                              <Button className={styles.button}>Save</Button>
+                              <Button
+                                colorPalette="red"
+                                className={styles.button}
+                                onClick={() => {
+                                  handleDeleteTask(task.task);
+                                  setDeleteDialogState(false);
+                                }}
+                              >
+                                Delete
+                              </Button>
                             </Dialog.Footer>
                             <Dialog.CloseTrigger asChild>
                               <CloseButton size="sm" />
@@ -185,6 +271,7 @@ export default function Home() {
           ))}
         </div>
       </main>
+      <Toaster />
     </div>
   );
 }
