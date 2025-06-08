@@ -12,11 +12,10 @@ axios.interceptors.request.use((request) => {
   if (userDataStr && userDataStr.length > 0) {
     const userDetails = JSON.parse(userDataStr);
 
-    reqData.userId = userDetails.id;
+    reqData.userId = userDetails.user.id;
   }
 
   request.data = reqData;
-  console.log(request.data);
 
   return request;
 });

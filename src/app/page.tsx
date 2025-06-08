@@ -16,9 +16,10 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import { Toaster, toaster } from "@/components/ui/toaster";
-import { MdDelete, MdCheck, MdLogin } from "react-icons/md";
+import { MdDelete, MdCheck, MdLogin, MdLogout } from "react-icons/md";
 
 import { Task, TaskUser } from "@/types/Task";
+import { User } from "@/types/User";
 import styles from "./page.module.css";
 import AddTaskForm from "@/components/AddTaskForm";
 import EditTaskForm from "@/components/EditTaskForm";
@@ -30,6 +31,7 @@ interface TaskResult {
 }
 
 export default function Home() {
+  const [userDetails, setUserDetails] = useState<User>({});
   const [tasks, setTasks] = useState<TaskResult[]>([]);
   const [deleteDialogState, setDeleteDialogState] = useState(false);
   // const googleAccessToken = localStorage.getItem("googleAccessToken");
@@ -43,6 +45,14 @@ export default function Home() {
     getTasks();
   }, []);
 
+  useEffect(() => {
+    const userDetailsStr = localStorage.getItem("user");
+
+    if (userDetailsStr && userDetailsStr.length > 0) {
+      setUserDetails(JSON.parse(userDetailsStr).user);
+    }
+  }, []);
+
   const handleGoogleLogin = () => {
     const client = (window as any).google.accounts.oauth2.initCodeClient({
       client_id:
@@ -54,14 +64,18 @@ export default function Home() {
         const response = await axios.post("/user/google/callback", {
           code,
         });
-        console.log("Running");
-        console.log(response);
 
         localStorage.setItem("user", JSON.stringify(response.data));
+        setUserDetails(response.data.user);
       },
     });
 
     client.requestCode();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUserDetails({});
   };
 
   const handleAddTask = async (taskData: Task) => {
@@ -124,8 +138,18 @@ export default function Home() {
           <Heading size="4xl" className={styles.title}>
             Skydo Task management
           </Heading>
-          {/* {googleAccessToken && googleAccessToken.length > 0 ? (
-            <AddTaskForm handleAddTask={handleAddTask} />
+          {userDetails && userDetails.id ? (
+            <div>
+              <AddTaskForm handleAddTask={handleAddTask} />
+              <Button
+                colorPalette="red"
+                variant="surface"
+                className={styles.button}
+                onClick={handleLogout}
+              >
+                <MdLogout /> Log Out?
+              </Button>
+            </div>
           ) : (
             <Button
               colorPalette="green"
@@ -135,9 +159,9 @@ export default function Home() {
             >
               <MdLogin /> Login
             </Button>
-          )} */}
-          <AddTaskForm handleAddTask={handleAddTask} />
-          <button onClick={handleGoogleLogin}>login</button>
+          )}
+          {/* <AddTaskForm handleAddTask={handleAddTask} />
+          <button onClick={handleGoogleLogin}>login</button> */}
         </div>
         <div className={styles.cardsContainer}>
           {tasks.map((task) => (
