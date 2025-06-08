@@ -12,15 +12,15 @@ import {
   CloseButton,
   Dialog,
   Portal,
-  Drawer,
   Badge,
 } from "@chakra-ui/react";
 import { Toaster, toaster } from "@/components/ui/toaster";
-import { MdDelete, MdEdit, MdCheck } from "react-icons/md";
+import { MdDelete, MdCheck } from "react-icons/md";
 
 import { Task, TaskUser } from "@/types/Task";
 import styles from "./page.module.css";
 import AddTaskForm from "@/components/AddTaskForm";
+import EditTaskForm from "@/components/EditTaskForm";
 import { priorities, status } from "@/utils/constants";
 
 interface TaskResult {
@@ -126,10 +126,10 @@ export default function Home() {
                         <Badge
                           className={styles.badge}
                           colorPalette={
-                            priorities[task.task.status].colorPalette
+                            priorities[task.task.priority].colorPalette
                           }
                         >
-                          {priorities[task.task.status].displayName}
+                          {priorities[task.task.priority].displayName}
                         </Badge>
                       </DataList.ItemValue>
                     </DataList.Item>
@@ -171,46 +171,7 @@ export default function Home() {
                     >
                       <MdCheck /> Complete
                     </Button>
-                    <Drawer.Root>
-                      <Drawer.Trigger asChild>
-                        <Button
-                          colorPalette="teal"
-                          variant="surface"
-                          className={styles.button}
-                        >
-                          <MdEdit /> Edit
-                        </Button>
-                      </Drawer.Trigger>
-                      <Portal>
-                        <Drawer.Backdrop />
-                        <Drawer.Positioner>
-                          <Drawer.Content className={styles.editTask}>
-                            <Drawer.Header>
-                              <Drawer.Title>Drawer Title</Drawer.Title>
-                            </Drawer.Header>
-                            <Drawer.Body>
-                              <p>
-                                Lorem ipsum dolor sit amet, consectetur
-                                adipiscing elit. Sed do eiusmod tempor
-                                incididunt ut labore et dolore magna aliqua.
-                              </p>
-                            </Drawer.Body>
-                            <Drawer.Footer>
-                              <Button
-                                variant="outline"
-                                className={styles.button}
-                              >
-                                Cancel
-                              </Button>
-                              <Button className={styles.button}>Save</Button>
-                            </Drawer.Footer>
-                            <Drawer.CloseTrigger asChild>
-                              <CloseButton size="sm" />
-                            </Drawer.CloseTrigger>
-                          </Drawer.Content>
-                        </Drawer.Positioner>
-                      </Portal>
-                    </Drawer.Root>
+                    <EditTaskForm getTasks={getTasks} taskData={task} />
                     <Dialog.Root
                       open={deleteDialogState}
                       onOpenChange={(e) => setDeleteDialogState(e.open)}

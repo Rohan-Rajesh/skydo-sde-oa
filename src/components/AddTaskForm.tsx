@@ -23,6 +23,7 @@ const AddTaskForm: React.FC<{
   handleAddTask: (arg0: Task) => void;
 }> = ({ handleAddTask }) => {
   const [users, setUsers] = useState<TaskUser[]>([]);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const getUsers = async () => {
@@ -50,7 +51,7 @@ const AddTaskForm: React.FC<{
   });
 
   return (
-    <Drawer.Root size="sm">
+    <Drawer.Root size="sm" open={open} onOpenChange={(e) => setOpen(e.open)}>
       <Drawer.Trigger asChild>
         <Button
           colorPalette="green"
@@ -109,7 +110,7 @@ const AddTaskForm: React.FC<{
                   name="priority"
                   onChange={addTaskFormik.handleChange}
                   onBlur={addTaskFormik.handleBlur}
-                  value={addTaskFormik.values.priority.toString()}
+                  // value={addTaskFormik.values.priority.toString()}
                 >
                   <RadioCard.Label>Priority</RadioCard.Label>
                   <HStack align="stretch">
@@ -135,13 +136,15 @@ const AddTaskForm: React.FC<{
                   <Field.Label>
                     Assign To <Field.RequiredIndicator />
                   </Field.Label>
-                  <NativeSelect.Root size="md" width="240px">
+                  <NativeSelect.Root
+                    size="md"
+                    width="240px"
+                    onChange={addTaskFormik.handleChange}
+                    onBlur={addTaskFormik.handleBlur}
+                  >
                     <NativeSelect.Field
                       placeholder="Select user"
                       className={styles.input}
-                      value={addTaskFormik.values.user}
-                      onChange={addTaskFormik.handleChange}
-                      onBlur={addTaskFormik.handleBlur}
                     >
                       {users.map((user) => (
                         <option key={user.id} value={user.id}>
@@ -194,6 +197,7 @@ const AddTaskForm: React.FC<{
                 onClick={(e) => {
                   e.preventDefault();
                   addTaskFormik.handleSubmit();
+                  setOpen(false);
                 }}
               >
                 Add Task

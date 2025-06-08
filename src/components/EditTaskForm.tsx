@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "@/utils/axios.config";
+import dayjs from "dayjs";
 import { useFormik } from "formik";
 import {
   HStack,
@@ -13,16 +14,24 @@ import {
   RadioCard,
   NativeSelect,
 } from "@chakra-ui/react";
-import { MdAdd } from "react-icons/md";
+import { toaster } from "@/components/ui/toaster";
+import { MdEdit } from "react-icons/md";
 
 import { priorities } from "@/utils/constants";
 import { Task, TaskUser } from "@/types/Task";
 import styles from "../app/page.module.css";
 
-const AddTaskForm: React.FC<{
-  handleAddTask: (arg0: Task) => void;
-}> = ({ handleAddTask }) => {
+interface TaskData {
+  task: Task;
+  user: TaskUser;
+}
+
+const EditTaskForm: React.FC<{
+  getTasks: () => void;
+  taskData: TaskData;
+}> = ({ getTasks, taskData }) => {
   const [users, setUsers] = useState<TaskUser[]>([]);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const getUsers = async () => {
@@ -36,28 +45,40 @@ const AddTaskForm: React.FC<{
 
   const addTaskFormik = useFormik<Task>({
     initialValues: {
-      title: "",
-      description: "",
-      user: 1,
-      priority: 1,
-      status: 1,
-      startDate: new Date(),
-      dueDate: new Date(),
+      title: taskData.task.title,
+      description: taskData.task.description,
+      user: taskData.task.user,
+      priority: taskData.task.priority,
+      status: taskData.task.status,
+      startDate: dayjs(taskData.task.startDate).format("YYYY-MM-DD"),
+      dueDate: dayjs(taskData.task.dueDate).format("YYYY-MM-DD"),
     },
-    onSubmit: (values) => {
-      handleAddTask(values);
+    onSubmit: async (values) => {
+      const response = await axios.post("/task/editTask", {
+        ...values,
+        id: taskData.task.id,
+      });
+
+      if (response.data.status === 1) {
+        getTasks();
+      } else {
+        toaster.create({
+          title: "Error occurred when editing task, please try again",
+          type: "error",
+        });
+      }
     },
   });
 
   return (
-    <Drawer.Root size="sm">
+    <Drawer.Root size="sm" open={open} onOpenChange={(e) => setOpen(e.open)}>
       <Drawer.Trigger asChild>
         <Button
-          colorPalette="green"
+          colorPalette="yellow"
           variant="surface"
           className={styles.button}
         >
-          <MdAdd /> Add Task
+          <MdEdit /> Edit Task
         </Button>
       </Drawer.Trigger>
       <Portal>
@@ -66,7 +87,7 @@ const AddTaskForm: React.FC<{
           <Drawer.Content className={styles.drawerContent}>
             <Drawer.Header>
               <Drawer.Title className={styles.drawerTitle}>
-                Add Task
+                Edit Task
               </Drawer.Title>
             </Drawer.Header>
             <Drawer.Body>
@@ -162,7 +183,8 @@ const AddTaskForm: React.FC<{
                     colorPalette="blue"
                     type="date"
                     className={styles.input}
-                    value={addTaskFormik.values.startDate.toString()}
+                    value={addTaskFormik.values.startDate as string}
+                    // value={dayjs(taskData.task.startDate).format("YYYY-MM-DD")}
                     onChange={addTaskFormik.handleChange}
                     onBlur={addTaskFormik.handleBlur}
                   />
@@ -177,7 +199,7 @@ const AddTaskForm: React.FC<{
                     colorPalette="blue"
                     type="date"
                     className={styles.input}
-                    value={addTaskFormik.values.dueDate.toString()}
+                    value={addTaskFormik.values.dueDate as string}
                     onChange={addTaskFormik.handleChange}
                     onBlur={addTaskFormik.handleBlur}
                   />
@@ -194,9 +216,10 @@ const AddTaskForm: React.FC<{
                 onClick={(e) => {
                   e.preventDefault();
                   addTaskFormik.handleSubmit();
+                  setOpen(false);
                 }}
               >
-                Add Task
+                Confirm
               </Button>
             </Drawer.Footer>
             <Drawer.CloseTrigger asChild>
@@ -209,4 +232,4 @@ const AddTaskForm: React.FC<{
   );
 };
 
-export default AddTaskForm;
+export default EditTaskForm;

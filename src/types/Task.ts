@@ -3,8 +3,8 @@ export interface Task {
   title: string;
   description: string;
   user: number;
-  startDate: Date;
-  dueDate: Date;
+  startDate: Date | string;
+  dueDate: Date | string;
   priority: number;
   status: number;
   createdAt?: Date;
