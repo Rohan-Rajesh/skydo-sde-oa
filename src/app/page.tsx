@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "../utils/axios.config";
 import dayjs from "dayjs";
+import { io } from "socket.io-client";
 import {
   Heading,
   Card,
@@ -30,6 +31,8 @@ interface TaskResult {
   user: TaskUser;
 }
 
+const socket = io("http://localhost:8080");
+
 export default function Home() {
   const [userDetails, setUserDetails] = useState<User>({});
   const [tasks, setTasks] = useState<TaskResult[]>([]);
@@ -52,6 +55,20 @@ export default function Home() {
       setUserDetails(JSON.parse(userDetailsStr).user);
     }
   }, []);
+
+  useEffect(() => {
+    socket.on("taskUpdate", () => {
+      console.log("running");
+      getTasks();
+    });
+
+    return () => {
+      socket.off("taskUpdate");
+    };
+  }, []);
+  const updateSocket = () => {
+    socket.emit("taskUpdate");
+  };
 
   const handleGoogleLogin = () => {
     const client = (window as any).google.accounts.oauth2.initCodeClient({
@@ -84,6 +101,7 @@ export default function Home() {
     if (response.data.status === 1) {
       setTasks([response.data.taskData, ...tasks]);
 
+      updateSocket();
       toaster.create({
         title: "Successfully added task!",
         type: "success",
@@ -104,6 +122,7 @@ export default function Home() {
     if (response.data.status === 1) {
       getTasks();
 
+      updateSocket();
       toaster.create({
         title: "Successfully completed task!",
         type: "success",
@@ -122,6 +141,7 @@ export default function Home() {
     });
 
     if (response.data.status === 1) {
+      updateSocket();
       getTasks();
     } else {
       toaster.create({
@@ -160,8 +180,6 @@ export default function Home() {
               <MdLogin /> Login
             </Button>
           )}
-          {/* <AddTaskForm handleAddTask={handleAddTask} />
-          <button onClick={handleGoogleLogin}>login</button> */}
         </div>
         <div className={styles.cardsContainer}>
           {tasks.map((task) => (
@@ -231,7 +249,11 @@ export default function Home() {
                     >
                       <MdCheck /> Complete
                     </Button>
-                    <EditTaskForm getTasks={getTasks} taskData={task} />
+                    <EditTaskForm
+                      getTasks={getTasks}
+                      updateSocket={updateSocket}
+                      taskData={task}
+                    />
                     <Dialog.Root
                       open={taskToDelete !== null}
                       onOpenChange={(open) => {

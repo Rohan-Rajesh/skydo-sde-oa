@@ -28,8 +28,9 @@ interface TaskData {
 
 const EditTaskForm: React.FC<{
   getTasks: () => void;
+  updateSocket: () => void;
   taskData: TaskData;
-}> = ({ getTasks, taskData }) => {
+}> = ({ getTasks, updateSocket, taskData }) => {
   const [users, setUsers] = useState<TaskUser[]>([]);
   const [open, setOpen] = useState(false);
 
@@ -65,6 +66,7 @@ const EditTaskForm: React.FC<{
 
       if (response.data.status === 1) {
         getTasks();
+        updateSocket();
       } else {
         toaster.create({
           title: "Error occurred when editing task, please try again",
