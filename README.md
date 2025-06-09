@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Skydo Task Management
 
-## Getting Started
+A collaborative task management web app with real-time updates, Google Calendar integration, and a modern UI built using **Next.js**, **Chakra UI**, **Socket.IO**, and **Google OAuth2**.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Google OAuth Login
+- Create, Edit, Complete & Delete Tasks
+- Sync with Google Calendar
+- Real-time Updates via WebSockets
+- UI built using Chakra UI
+- Task Metadata: Priority, Status, Assigned User, Start & Due Dates
+- Filter: Toggle to show/hide completed tasks
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech Stack
 
-## Learn More
+### Frontend
 
-To learn more about Next.js, take a look at the following resources:
+- Next.js (App Router)
+- TypeScript
+- Chakra UI
+- Socket.IO Client
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Backend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Node.js
+- Express.js
+- MySQL Database
+- Socket.IO Server
 
-## Deploy on Vercel
+### Integrations
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Google OAuth 2.0
+- Google Calendar API
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Utilities & Libraries
+
+- Axios (custom api config)
+- Day.js (date formatting)
+- LocalStorage (user session persistence)
+
+---
+
+## DB structure
+
+### Task table (task)
+
+1. id - int
+2. eventId(google calendar event ID) - varchar(100)
+3. title - varchar(250)
+4. description - text
+5. user(user id that the task was assigned to) - int
+6. startDate - datetime
+7. dueDate - datetime
+8. priority(see below for mapping) - int
+9. status(see below for mapping) - int
+10. createdAt - datetime
+11. updatedAt - datetime
+
+### User table (user)
+
+1. id - int
+2. userId(google user ID) - varchar(250)
+3. name - varchar(50)
+4. accessToken(for google calendar) - varchar(250)
+5. refreshToken(for persistent auth) - varchar(250)
+6. email - varchar(100)
+7. status - int
+8. createdAt - datetime
+9. updatedAt - datetime
+
+### Priority and status mapping
+
+Priority: 0 = low; 1 = medium; 2 = high
+Status: 0 = to do; 1 = in progress; 2 = completed
