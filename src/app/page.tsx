@@ -33,7 +33,7 @@ interface TaskResult {
 export default function Home() {
   const [userDetails, setUserDetails] = useState<User>({});
   const [tasks, setTasks] = useState<TaskResult[]>([]);
-  const [deleteDialogState, setDeleteDialogState] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   // const googleAccessToken = localStorage.getItem("googleAccessToken");
 
   const getTasks = async () => {
@@ -233,14 +233,17 @@ export default function Home() {
                     </Button>
                     <EditTaskForm getTasks={getTasks} taskData={task} />
                     <Dialog.Root
-                      open={deleteDialogState}
-                      onOpenChange={(e) => setDeleteDialogState(e.open)}
+                      open={taskToDelete !== null}
+                      onOpenChange={(open) => {
+                        if (!open) setTaskToDelete(null);
+                      }}
                     >
                       <Dialog.Trigger asChild>
                         <Button
                           colorPalette="red"
                           variant="surface"
                           className={styles.button}
+                          onClick={() => setTaskToDelete(task.task)}
                         >
                           <MdDelete /> Delete
                         </Button>
@@ -271,8 +274,10 @@ export default function Home() {
                                 colorPalette="red"
                                 className={styles.button}
                                 onClick={() => {
-                                  handleDeleteTask(task.task);
-                                  setDeleteDialogState(false);
+                                  if (taskToDelete) {
+                                    handleDeleteTask(taskToDelete);
+                                  }
+                                  setTaskToDelete(null);
                                 }}
                               >
                                 Delete

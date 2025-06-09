@@ -54,6 +54,10 @@ const EditTaskForm: React.FC<{
       dueDate: dayjs(taskData.task.dueDate).format("YYYY-MM-DD"),
     },
     onSubmit: async (values) => {
+      console.log({
+        ...values,
+        id: taskData.task.id,
+      });
       const response = await axios.post("/task/editTask", {
         ...values,
         id: taskData.task.id,
