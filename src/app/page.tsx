@@ -114,19 +114,22 @@ export default function Home() {
     }
   };
 
-  const handleCompleteTask = async (task: Task) => {
-    const response = await axios.post("/task/completeTask", {
+  const handleChangeTaskStatus = async (task: Task) => {
+    const response = await axios.post("/task/changeTaskStatus", {
       taskId: task.id,
+      status: task.status + 1,
     });
 
     if (response.data.status === 1) {
-      getTasks();
-
-      updateSocket();
       toaster.create({
-        title: "Successfully completed task!",
+        title: `Successfully ${
+          task.status === 0 ? "started" : "completed"
+        } task!`,
         type: "success",
       });
+
+      getTasks();
+      updateSocket();
     } else {
       toaster.create({
         title: "Error occurred when completing task, please try again",
@@ -239,16 +242,20 @@ export default function Home() {
                 <Card.Footer className={styles.cardFooter}>
                   <div></div>
                   <span>
-                    <Button
-                      colorPalette="green"
-                      variant="surface"
-                      className={styles.button}
-                      onClick={() => {
-                        handleCompleteTask(task.task);
-                      }}
-                    >
-                      <MdCheck /> Complete
-                    </Button>
+                    {task.task.status !== 2 && (
+                      <Button
+                        colorPalette="green"
+                        variant="surface"
+                        className={styles.button}
+                        onClick={() => {
+                          handleChangeTaskStatus(task.task);
+                        }}
+                      >
+                        <MdCheck />{" "}
+                        {task.task.status === 0 ? "Start Task" : "Complete"}
+                      </Button>
+                    )}
+
                     <EditTaskForm
                       getTasks={getTasks}
                       updateSocket={updateSocket}
