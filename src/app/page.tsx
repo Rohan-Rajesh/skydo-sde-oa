@@ -15,6 +15,7 @@ import {
   Dialog,
   Portal,
   Badge,
+  Switch,
 } from "@chakra-ui/react";
 import { Toaster, toaster } from "@/components/ui/toaster";
 import { MdDelete, MdCheck, MdLogin, MdLogout } from "react-icons/md";
@@ -36,17 +37,20 @@ const socket = io("http://localhost:8080");
 export default function Home() {
   const [userDetails, setUserDetails] = useState<User>({});
   const [tasks, setTasks] = useState<TaskResult[]>([]);
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   // const googleAccessToken = localStorage.getItem("googleAccessToken");
 
   const getTasks = async () => {
-    const response = await axios.post("/task/getTasks");
+    const response = await axios.post("/task/getTasks", {
+      completeFlag: showCompletedTasks ? 1 : 0,
+    });
     setTasks(response.data);
   };
 
   useEffect(() => {
     getTasks();
-  }, []);
+  }, [showCompletedTasks]);
 
   useEffect(() => {
     const userDetailsStr = localStorage.getItem("user");
@@ -183,6 +187,21 @@ export default function Home() {
               <MdLogin /> Login
             </Button>
           )}
+        </div>
+        <div className={styles.showCompletedTasks}>
+          <div />
+          <div>
+            <Switch.Root
+              checked={showCompletedTasks}
+              onCheckedChange={(e) => setShowCompletedTasks(e.checked)}
+            >
+              <Switch.HiddenInput />
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <Switch.Label>Show Completed Tasks?</Switch.Label>
+            </Switch.Root>
+          </div>
         </div>
         <div className={styles.cardsContainer}>
           {tasks.map((task) => (
